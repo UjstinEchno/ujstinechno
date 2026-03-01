@@ -475,12 +475,114 @@ figcaption {
   .footer-meta { text-align: left; }
   nav { overflow-x: auto; }
 }
+
+/* ─── BOARD MODE ─── */
+#board-toggle {
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: none;
+  border: none;
+  border-left: 1px solid rgba(0,0,0,0.12);
+  cursor: pointer;
+  color: rgba(0,0,0,0.45);
+  font-family: var(--karrik);
+  white-space: nowrap;
+  transition: background 0.1s, color 0.1s;
+  margin-left: auto;
+}
+#board-toggle:hover { background: var(--ink); color: var(--paper); }
+
+#free-canvas {
+  display: none;
+  position: fixed;
+  top: 42px; left: 0; right: 0; bottom: 0;
+  overflow: auto;
+  background: var(--paper);
+  background-image: radial-gradient(circle, rgba(0,0,0,0.1) 1px, transparent 1px);
+  background-size: 28px 28px;
+  z-index: 200;
+}
+
+#canvas-inner {
+  position: relative;
+  width: 4000px;
+  height: 3000px;
+}
+
+.free-card {
+  position: absolute;
+  width: 400px;
+  border: 2px solid var(--ink);
+  background: var(--paper);
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.15);
+  transition: box-shadow 0.1s;
+}
+.free-card.dragging {
+  cursor: grabbing;
+  box-shadow: 8px 8px 0 rgba(0,0,0,0.25);
+}
+.free-card.yellow { background: var(--yellow); }
+.free-card.pink   { background: var(--pink);   }
+.free-card.green  { background: var(--green);  }
+.free-card.blue   { background: var(--blue);   }
+.free-card.orange { background: var(--orange); }
+.free-card.lilac  { background: var(--lilac);  }
+.free-card.is-header { background: var(--ink) !important; color: var(--paper); width: 520px; }
+.free-card.is-header a { color: var(--paper); }
+
+.fc-handle {
+  padding: 10px 14px 8px;
+  border-bottom: 1.5px solid rgba(0,0,0,0.15);
+  cursor: grab;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+.free-card.is-header .fc-handle { border-color: rgba(255,255,255,0.1); color: var(--paper); }
+
+.fc-body {
+  padding: 20px 22px;
+  font-size: 13px;
+  line-height: 1.65;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+#reset-layout {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1001;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  padding: 10px 16px;
+  font-family: var(--karrik);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+#reset-layout:hover { opacity: 0.7; }
 </style>
 </head>
 <body>
-<div class="board">
+<!-- FREE CANVAS — outside .board so it stays visible in board mode -->
+<div id="free-canvas">
+  <div id="canvas-inner"></div>
+</div>
+<button id="reset-layout">↺ Reset Layout</button>
 
-<!-- ══ NAV ══ -->
+<!-- NAV — outside .board -->
 <nav>
   <span class="nav-id">Justin Enoch</span>
   <div class="nav-links">
@@ -489,7 +591,10 @@ figcaption {
     <a href="#casestudy">Case Study</a>
     <a href="#attachment">Documents</a>
   </div>
+  <button id="board-toggle">⊞ Board Mode</button>
 </nav>
+
+<div class="board">
 
 
 <!-- ══ TITLE ══ -->
@@ -882,12 +987,158 @@ figcaption {
   <div class="footer-meta">
     ReSound · Lusofona · 2026<br>
     Supervisor: Adriana De Sa<br>
-    <a href="mailto:justintenoch@gmail.com">justintenoch@gmail.com</a><br><br>
+    <a href="/cdn-cgi/l/email-protection#89e3fcfafde0e7fdece7e6eae1c9eee4e8e0e5a7eae6e4"><span class="__cf_email__" data-cfemail="452f3036312c2b31202b2a262d052228242c296b262a28">[email&#160;protected]</span></a><br><br>
     Font: <a href="https://velvetyne.fr/fonts/karrik/" target="_blank">Karrik</a> by J-B Morizot &amp; L. Le Bihan / Velvetyne — SIL OFL<br>
-    Host free: <a href="https://pages.github.com" target="_blank">GitHub Pages</a> · <a href="https://app.netlify.com/drop" target="_blank">Netlify</a> · <a href="https://tiiny.host" target="_blank">Tiiny.host</a>
+    Host free: <a href="https://pages.github.com" target="_blank">GitHub Pages</a> · <a href="https://app.netlify.com/drop" targe    Host free: <a href="https://pages.github.com" target="_blank">GitHub Pages</a> · <a href="https://app.netlify.com/drop" target="_blank">Netlify</a> · <a href="https://tiiny.host" target="_blank">Tiiny.host</a>
   </div>
 </div>
 
 </div><!-- .board -->
+
+<script>
+(function () {
+  var STORAGE_KEY  = 'rb-positions';
+  var STORAGE_MODE = 'rb-active';
+
+  var toggle   = document.getElementById('board-toggle');
+  var canvas   = document.getElementById('free-canvas');
+  var inner    = document.getElementById('canvas-inner');
+  var resetBtn = document.getElementById('reset-layout');
+  var board    = document.querySelector('.board');
+
+  var active = false;
+  var zTop   = 10;
+  var COLORS = ['yellow','pink','green','blue','orange','lilac','dark','bare'];
+
+  function buildCards() {
+    inner.innerHTML = '';
+
+    var sources = board.querySelectorAll(
+      '.title-block, .sh, .row > .node, .footer-block'
+    );
+
+    var COL_COUNT = 3;
+    var GAP_X     = 440;
+    var GAP_Y     = 32;
+    var colY      = [24, 24, 24];
+
+    var savedPos;
+    try { savedPos = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+    catch(e) { savedPos = {}; }
+
+    Array.prototype.forEach.call(sources, function(src, i) {
+      var id = 'c' + i;
+
+      var card = document.createElement('div');
+      card.className = 'free-card';
+      card.dataset.id = id;
+
+      COLORS.forEach(function(c) {
+        if (src.classList.contains(c)) card.classList.add(c);
+      });
+
+      var isHeader = src.classList.contains('sh') ||
+                     src.classList.contains('title-block') ||
+                     src.classList.contains('footer-block');
+      if (isHeader) card.classList.add('is-header');
+
+      var handle = document.createElement('div');
+      handle.className = 'fc-handle';
+      var labelEl = src.querySelector('.nl, h2, h1, .eyebrow');
+      handle.textContent = '⠿  ' + (labelEl ? labelEl.textContent.trim().slice(0, 50) : 'Node');
+      card.appendChild(handle);
+
+      var body = document.createElement('div');
+      body.className = 'fc-body';
+      body.innerHTML = src.innerHTML;
+      Array.prototype.forEach.call(body.querySelectorAll('.nl'), function(n){ n.remove(); });
+      card.appendChild(body);
+
+      var col = i % COL_COUNT;
+      var sp  = savedPos[id];
+      var x   = sp ? sp.x : 24 + col * GAP_X;
+      var y   = sp ? sp.y : colY[col];
+      var w   = isHeader ? 520 : 400;
+
+      card.style.cssText = 'left:' + x + 'px;top:' + y + 'px;width:' + w + 'px;z-index:' + (++zTop);
+      colY[col] += 360 + GAP_Y;
+
+      inner.appendChild(card);
+      attachDrag(card);
+    });
+  }
+
+  function attachDrag(card) {
+    var sx, sy, sl, st, pid;
+
+    card.addEventListener('pointerdown', function(e) {
+      if (e.target.closest('a,button,input,select,textarea,audio,video,iframe')) return;
+      e.preventDefault();
+      pid = e.pointerId;
+      card.setPointerCapture(pid);
+      sx = e.clientX; sy = e.clientY;
+      sl = parseInt(card.style.left) || 0;
+      st = parseInt(card.style.top)  || 0;
+      card.style.zIndex = ++zTop;
+      card.classList.add('dragging');
+
+      function onMove(e) {
+        if (e.pointerId !== pid) return;
+        card.style.left = Math.max(0, sl + e.clientX - sx) + 'px';
+        card.style.top  = Math.max(0, st + e.clientY - sy) + 'px';
+      }
+      function onUp(e) {
+        if (e.pointerId !== pid) return;
+        card.classList.remove('dragging');
+        card.releasePointerCapture(pid);
+        card.removeEventListener('pointermove', onMove);
+        card.removeEventListener('pointerup', onUp);
+        card.removeEventListener('pointercancel', onUp);
+        try {
+          var all = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+          all[card.dataset.id] = { x: parseInt(card.style.left), y: parseInt(card.style.top) };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+        } catch(err) {}
+      }
+      card.addEventListener('pointermove', onMove);
+      card.addEventListener('pointerup', onUp);
+      card.addEventListener('pointercancel', onUp);
+    });
+  }
+
+  function enterBoard() {
+    buildCards();
+    active = true;
+    board.style.display  = 'none';
+    canvas.style.display = 'block';
+    resetBtn.style.display = 'block';
+    toggle.textContent = '☰ Scroll Mode';
+    try { localStorage.setItem(STORAGE_MODE, '1'); } catch(e) {}
+  }
+
+  function exitBoard() {
+    active = false;
+    canvas.style.display = 'none';
+    board.style.display  = '';
+    resetBtn.style.display = 'none';
+    toggle.textContent = '⊞ Board Mode';
+    try { localStorage.setItem(STORAGE_MODE, '0'); } catch(e) {}
+  }
+
+  toggle.addEventListener('click', function() {
+    active ? exitBoard() : enterBoard();
+  });
+
+  resetBtn.addEventListener('click', function() {
+    if (!confirm('Reset card positions?')) return;
+    try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+    buildCards();
+  });
+
+  try {
+    if (localStorage.getItem(STORAGE_MODE) === '1') enterBoard();
+  } catch(e) {}
+})();
+</script>
 </body>
 </html>
