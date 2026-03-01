@@ -1,2 +1,893 @@
-# ReSoundResearch
-Project Incubation Website
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Name — Research</title>
+
+<!--
+  FONT: Karrik by Jean-Baptiste Morizot & Lucas Le Bihan
+  Published by Velvetyne Type Foundry — SIL Open Font Licence
+  https://velvetyne.fr/fonts/karrik/
+
+  TO SELF-HOST (recommended):
+    1. Download from https://velvetyne.fr/download/?font=karrik
+    2. Place Karrik-Regular.woff2 and Karrik-Italic.woff2 next to this HTML file
+    3. Replace the @font-face src URLs below with local paths, e.g. src: url("Karrik-Regular.woff2")
+
+  The @font-face below loads from GitLab's raw CDN as a fallback.
+  If the font doesn't load, the site falls back to a system grotesque.
+-->
+<style>
+@font-face {
+  font-family: 'Karrik';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url("Karrik-Regular.woff2") format('woff2'),
+       url("Karrik-Regular.woff") format('woff');
+}
+
+@font-face {
+  font-family: 'Karrik';
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+  src: url("Karrik-Italic.woff2") format('woff2'),
+       url("Karrik-Italic.woff") format('woff');
+}
+
+/* ─── TOKENS ─── */
+:root {
+  --paper:  #f5f3ee;
+  --ink:    #0f0f0f;
+  --dim:    #888;
+  --rule:   #0f0f0f;
+
+  --yellow: #f5e040;
+  --pink:   #f26e8a;
+  --green:  #4ee394;
+  --blue:   #4ecff5;
+  --orange: #f5832a;
+  --lilac:  #c2a0ff;
+
+  --karrik: 'Karrik', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--karrik);
+  font-size: 14px;
+  line-height: 1.7;
+  /* subtle paper grain */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)' opacity='0.032'/%3E%3C/svg%3E");
+}
+
+a { color: var(--ink); text-underline-offset: 3px; text-decoration-color: rgba(0,0,0,0.25); }
+a:hover { text-decoration-color: var(--ink); }
+
+/* ─── NAV ─── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  height: 42px;
+  display: flex;
+  align-items: stretch;
+  border-bottom: 2px solid var(--ink);
+  background: var(--yellow);
+}
+
+.nav-id {
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  border-right: 2px solid var(--ink);
+  white-space: nowrap;
+}
+
+.nav-links {
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+}
+
+.nav-links a {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: rgba(0,0,0,0.45);
+  border-right: 1px solid rgba(0,0,0,0.12);
+  white-space: nowrap;
+  transition: background 0.1s, color 0.1s;
+}
+
+.nav-links a:hover { background: var(--ink); color: var(--paper); }
+
+/* ─── BOARD ─── */
+.board { padding-top: 42px; }
+
+/* ─── NODE — core card ─── */
+.node {
+  padding: 32px 36px;
+  border-right: 2px solid var(--ink);
+  position: relative;
+}
+
+/* color variants */
+.node.yellow { background: var(--yellow); }
+.node.pink   { background: var(--pink);   }
+.node.green  { background: var(--green);  }
+.node.blue   { background: var(--blue);   }
+.node.orange { background: var(--orange); }
+.node.lilac  { background: var(--lilac);  }
+.node.dark   { background: var(--ink); color: var(--paper); }
+.node.dark a { color: var(--paper); }
+.node.bare   { background: var(--paper);  }
+
+/* node label — small tag at top */
+.nl {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.45;
+  margin-bottom: 18px;
+}
+
+/* ─── ROW ─── */
+.row {
+  display: grid;
+  border-bottom: 2px solid var(--ink);
+}
+
+.row > .node:last-child { border-right: none; }
+
+.r-1   { grid-template-columns: 1fr; }
+.r-2   { grid-template-columns: 1fr 1fr; }
+.r-3   { grid-template-columns: 1fr 1fr 1fr; }
+.r-12  { grid-template-columns: 1fr 2fr; }
+.r-21  { grid-template-columns: 2fr 1fr; }
+.r-13  { grid-template-columns: 1fr 3fr; }
+
+/* ─── SECTION HEADER ─── */
+.sh {
+  border-bottom: 2px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  padding: 18px 36px;
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+}
+
+.sh-n {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.35;
+}
+
+.sh h2 {
+  font-size: clamp(18px, 2.5vw, 28px);
+  letter-spacing: -0.02em;
+  font-weight: 400;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+/* ─── TITLE BLOCK ─── */
+.title-block {
+  border-bottom: 2px solid var(--ink);
+  background: var(--yellow);
+  padding: 80px 36px 52px;
+}
+
+.title-block .eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.4;
+  margin-bottom: 36px;
+}
+
+.title-block h1 {
+  font-size: clamp(52px, 9vw, 120px);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  font-weight: 400;
+  max-width: 12ch;
+  margin-bottom: 52px;
+  /* SS01 stylistic set — chaotic uppercase — enable if desired */
+  /* font-feature-settings: "ss01" 1; */
+}
+
+.title-block .lede {
+  font-size: 15px;
+  line-height: 1.65;
+  max-width: 54ch;
+  font-style: italic;
+  border-top: 1.5px solid var(--ink);
+  padding-top: 22px;
+}
+
+/* ─── TYPOGRAPHY ─── */
+h3 {
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  margin-bottom: 14px;
+  text-transform: uppercase;
+}
+
+p {
+  font-size: 14px;
+  line-height: 1.72;
+  max-width: 64ch;
+  margin-bottom: 1em;
+}
+
+p:last-child { margin-bottom: 0; }
+p + p { text-indent: 1.6em; margin-top: -1em; }
+
+em { font-style: italic; }
+
+/* ─── BLOCKQUOTE ─── */
+blockquote {
+  margin: 24px 0;
+  padding: 18px 22px;
+  border-left: 3px solid var(--ink);
+  background: rgba(0,0,0,0.07);
+  max-width: 52ch;
+}
+
+blockquote p {
+  font-style: italic;
+  margin-bottom: 0;
+  text-indent: 0 !important;
+}
+
+blockquote cite {
+  display: block;
+  margin-top: 10px;
+  font-size: 11px;
+  font-style: normal;
+  letter-spacing: 0.06em;
+  opacity: 0.5;
+}
+
+/* ─── TENSION ─── */
+.tension {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 26px 30px;
+  max-width: 60ch;
+  margin: 8px 0 0;
+}
+
+.tension .tl {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--pink);
+  margin-bottom: 14px;
+}
+
+.tension p {
+  font-style: italic;
+  color: #bbb;
+  max-width: 100%;
+  margin: 0;
+  text-indent: 0 !important;
+}
+
+/* ─── SUBQUESTIONS ─── */
+.subqs { list-style: none; padding: 0; margin: 4px 0 0; }
+
+.subqs li {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  gap: 10px;
+  padding: 13px 0;
+  border-bottom: 1.5px solid rgba(0,0,0,0.15);
+  align-items: baseline;
+}
+
+.subqs li:first-child { border-top: 1.5px solid rgba(0,0,0,0.15); }
+.subqs .qn { font-size: 10px; letter-spacing: 0.1em; opacity: 0.4; }
+
+/* ─── BIBLIOGRAPHY ─── */
+.bib { list-style: none; padding: 0; margin: 0; }
+
+.bib li {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 16px;
+  padding: 26px 0;
+  border-bottom: 1.5px solid rgba(0,0,0,0.15);
+  align-items: start;
+}
+
+.bib li:first-child { border-top: 1.5px solid rgba(0,0,0,0.15); }
+
+.bib .bn {
+  font-size: 22px;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  opacity: 0.18;
+  text-align: right;
+  padding-top: 3px;
+}
+
+.bib .btype {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.4;
+  margin-bottom: 6px;
+}
+
+.bib .bcite { margin-bottom: 8px; max-width: 60ch; }
+.bib .bnote {
+  font-size: 13px;
+  font-style: italic;
+  opacity: 0.65;
+  max-width: 58ch;
+  margin: 0;
+  text-indent: 0 !important;
+}
+
+/* ─── MEDIA ─── */
+figure.mfig {
+  margin: 22px 0 0;
+  border: 2px solid var(--ink);
+}
+
+figure.mfig:first-child { margin-top: 0; }
+
+figure.mfig img,
+figure.mfig iframe,
+figure.mfig video { display: block; width: 100%; }
+figure.mfig audio  { display: block; width: 100%; padding: 10px; }
+
+figcaption {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  opacity: 0.45;
+  padding: 7px 10px;
+  border-top: 1.5px solid var(--ink);
+}
+
+.ph {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.3;
+  text-align: center;
+  padding: 12px;
+  background: rgba(0,0,0,0.05);
+}
+
+/* ─── PROCESS LIST ─── */
+.process { list-style: none; padding: 0; margin: 4px 0 0; }
+
+.process li {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 18px;
+  padding: 14px 0;
+  border-bottom: 1.5px solid rgba(0,0,0,0.15);
+  align-items: baseline;
+}
+
+.process li:first-child { border-top: 1.5px solid rgba(0,0,0,0.15); }
+.process .phl { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.4; }
+
+/* ─── ATTACHMENTS ─── */
+.attach {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 14px;
+  padding: 24px 0;
+  border-bottom: 1.5px solid rgba(0,0,0,0.15);
+  text-decoration: none;
+  color: var(--ink);
+  align-items: start;
+}
+
+.attach:first-of-type { border-top: 1.5px solid rgba(0,0,0,0.15); }
+.attach:hover .at { opacity: 0.5; }
+
+.attach .aext { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.4; padding-top: 2px; }
+.attach .at   { font-size: 14px; margin-bottom: 4px; transition: opacity .1s; }
+.attach .ad   { font-size: 12px; font-style: italic; opacity: 0.5; max-width: 58ch; }
+
+/* ─── FOOTER ─── */
+.footer-block {
+  border-top: 2px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  padding: 44px 36px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.footer-name {
+  font-size: clamp(32px, 5vw, 64px);
+  letter-spacing: -0.04em;
+  line-height: 0.9;
+  text-transform: uppercase;
+  opacity: 0.18;
+}
+
+.footer-meta {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  opacity: 0.35;
+  line-height: 2.2;
+  text-align: right;
+}
+.footer-meta a { color: var(--paper); }
+.footer-meta a:hover { opacity: 1; }
+
+/* ─── MINDMAP WRAPPER ─── */
+.mindmap-wrap {
+  background: var(--ink);
+  border: none;
+  overflow: hidden;
+}
+
+.mindmap-wrap figcaption {
+  border-top: 1px solid #1f1f1f;
+  background: var(--ink);
+  color: #333;
+  font-size: 10px;
+  padding: 8px 14px;
+  letter-spacing: 0.08em;
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 680px) {
+  .title-block { padding: 60px 20px 36px; }
+  .sh, .node { padding-left: 20px; padding-right: 20px; }
+  .r-2, .r-3, .r-12, .r-21, .r-13 { grid-template-columns: 1fr; }
+  .row > .node { border-right: none; border-bottom: 2px solid var(--ink); }
+  .row > .node:last-child { border-bottom: none; }
+  .footer-block { flex-direction: column; align-items: flex-start; padding: 32px 20px; }
+  .footer-meta { text-align: left; }
+  nav { overflow-x: auto; }
+}
+</style>
+</head>
+<body>
+<div class="board">
+
+<!-- ══ NAV ══ -->
+<nav>
+  <span class="nav-id">Your Name</span>
+  <div class="nav-links">
+    <a href="#overview">§1 Overview</a>
+    <a href="#literature">§2 Literature</a>
+    <a href="#casestudy">§3 Case Study</a>
+    <a href="#attachment">§4 Paper</a>
+  </div>
+</nav>
+
+
+<!-- ══ TITLE ══ -->
+<div class="title-block">
+  <p class="eyebrow">Programme &nbsp;·&nbsp; Institution &nbsp;·&nbsp; Year</p>
+  <h1>Your<br>Research<br>Title<br>Here</h1>
+  <p class="lede">One or two sentences. What is this research about and why now. Write it as a provocation, not a summary — make someone want to keep reading.</p>
+</div>
+
+
+<!-- ══════════════════════════
+     §1 OVERVIEW
+══════════════════════════ -->
+<div class="sh" id="overview">
+  <span class="sh-n">§01</span>
+  <h2>Research Overview</h2>
+</div>
+
+<!-- Abstract + Research Question -->
+<div class="row r-12">
+  <div class="node green">
+    <span class="nl">Abstract</span>
+    <p>Write your short abstract here. State your central research question plainly. Where does it come from — your previous creative or professional practice? Be specific about the origin.</p>
+    <p>A second paragraph can describe your approach. What are you actually doing — reading, making, interviewing, performing? Whose work are you in dialogue with?</p>
+  </div>
+  <div class="node yellow">
+    <span class="nl">Research Question + Context</span>
+    <p>State your main research question explicitly. Situate it with one or two landmark references.</p>
+    <blockquote>
+      <p>[Paste a quotation from a landmark source here.]</p>
+      <cite>— Author, <em>Title</em>, Year &nbsp;<a href="#">→</a></cite>
+    </blockquote>
+    <p>Explain what this opens for your inquiry. A second reference — <a href="#bib-2">[Author, Year]</a> — argues differently: [summarise]. The tension between these two is productive because [explain].</p>
+  </div>
+</div>
+
+<!-- Sub-questions + Case Study -->
+<div class="row r-21">
+  <div class="node blue">
+    <span class="nl">Sub-questions</span>
+    <ul class="subqs">
+      <li><span class="qn">Q.1</span><span>[Sub-question one]. See <a href="#">[Ref A]</a> and, for a conflicting view, <a href="#">[Ref B]</a>.</span></li>
+      <li><span class="qn">Q.2</span><span>[Sub-question two]. The tension here is between [perspective X] and [perspective Y].</span></li>
+      <li><span class="qn">Q.3</span><span>[Sub-question three]. This appears most concretely in the case study.</span></li>
+    </ul>
+  </div>
+  <div class="node pink">
+    <span class="nl">Case Study Summary</span>
+    <p>Describe the collaborative project briefly — who, what, where, when. How do your personal questions and motivations show up in the work?</p>
+    <p>Does the project reveal a tension between theory and practice? Name it. Grey areas are not failures — they are the location of future work.</p>
+  </div>
+</div>
+
+<!-- Tension -->
+<div class="row r-1">
+  <div class="node bare" style="padding: 32px 36px;">
+    <div class="tension">
+      <span class="tl">Tension / Open Question</span>
+      <p>[State the unresolved tension or grey area your research exposes. One or two sentences, as precisely as possible. This is the hinge the whole site turns on.]</p>
+    </div>
+  </div>
+</div>
+
+<!-- Mindmap -->
+<div class="row r-1">
+  <div class="node dark" style="padding: 0; border-right: none;">
+    <figure class="mindmap-wrap">
+      <!--
+        REPLACE THIS SVG with your own image:
+          <img src="mindmap.png" alt="Research mindmap" style="width:100%;display:block;">
+        OR edit the <text> nodes directly below.
+      -->
+      <svg viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg"
+           style="display:block;width:100%;"
+           font-family="'Karrik', 'Helvetica Neue', sans-serif">
+        <rect width="900" height="420" fill="#0f0f0f"/>
+        <!-- connectors -->
+        <g stroke="#1e1e1e" stroke-width="1.5" fill="none">
+          <line x1="450" y1="210" x2="240" y2="118"/>
+          <line x1="450" y1="210" x2="660" y2="118"/>
+          <line x1="450" y1="210" x2="240" y2="302"/>
+          <line x1="450" y1="210" x2="660" y2="302"/>
+          <line x1="450" y1="210" x2="110" y2="210"/>
+          <line x1="450" y1="210" x2="790" y2="210"/>
+          <line x1="240" y1="118" x2="130" y2="58"/>
+          <line x1="240" y1="118" x2="248" y2="44"/>
+          <line x1="660" y1="118" x2="770" y2="58"/>
+          <line x1="660" y1="118" x2="652" y2="44"/>
+          <line x1="240" y1="302" x2="130" y2="362"/>
+          <line x1="240" y1="302" x2="248" y2="376"/>
+          <line x1="660" y1="302" x2="770" y2="362"/>
+          <line x1="660" y1="302" x2="652" y2="376"/>
+        </g>
+        <!-- centre node -->
+        <rect x="350" y="186" width="200" height="48" fill="#f5e040"/>
+        <text x="450" y="207" text-anchor="middle" fill="#0f0f0f" font-size="10" letter-spacing="0.1em" text-transform="uppercase">MAIN QUESTION</text>
+        <text x="450" y="222" text-anchor="middle" fill="rgba(0,0,0,0.4)" font-size="8">→ replace this text</text>
+        <!-- branch nodes -->
+        <rect x="158" y="94"  width="164" height="46" fill="#4ecff5"/>
+        <text x="240" y="115" text-anchor="middle" fill="#0f0f0f" font-size="9">Sub-Question 1</text>
+        <text x="240" y="128" text-anchor="middle" fill="rgba(0,0,0,0.45)" font-size="7.5">[concept / theme]</text>
+        <rect x="578" y="94"  width="164" height="46" fill="#4ee394"/>
+        <text x="660" y="115" text-anchor="middle" fill="#0f0f0f" font-size="9">Sub-Question 2</text>
+        <text x="660" y="128" text-anchor="middle" fill="rgba(0,0,0,0.45)" font-size="7.5">[concept / theme]</text>
+        <rect x="158" y="278" width="164" height="46" fill="#f26e8a"/>
+        <text x="240" y="299" text-anchor="middle" fill="#0f0f0f" font-size="9">Case Study</text>
+        <text x="240" y="312" text-anchor="middle" fill="rgba(0,0,0,0.45)" font-size="7.5">[project name]</text>
+        <rect x="578" y="278" width="164" height="46" fill="#c2a0ff"/>
+        <text x="660" y="299" text-anchor="middle" fill="#0f0f0f" font-size="9">Key Theorist</text>
+        <text x="660" y="312" text-anchor="middle" fill="rgba(0,0,0,0.45)" font-size="7.5">[Author, Year]</text>
+        <rect x="18"  y="191" width="92"  height="38" fill="#f5832a"/>
+        <text x="64"  y="208" text-anchor="middle" fill="#0f0f0f" font-size="8.5">Practice</text>
+        <text x="64"  y="220" text-anchor="middle" fill="rgba(0,0,0,0.4)" font-size="7">→ method</text>
+        <rect x="790" y="191" width="92"  height="38" fill="#f5832a"/>
+        <text x="836" y="208" text-anchor="middle" fill="#0f0f0f" font-size="8.5">Theory</text>
+        <text x="836" y="220" text-anchor="middle" fill="rgba(0,0,0,0.4)" font-size="7">→ frame</text>
+        <!-- leaf nodes -->
+        <g fill="#161616" stroke="#252525" stroke-width="1">
+          <rect x="74"  y="34"  width="110" height="28"/>
+          <rect x="178" y="22"  width="110" height="28"/>
+          <rect x="716" y="34"  width="110" height="28"/>
+          <rect x="612" y="22"  width="110" height="28"/>
+          <rect x="74"  y="352" width="110" height="28"/>
+          <rect x="178" y="364" width="110" height="28"/>
+          <rect x="716" y="352" width="110" height="28"/>
+          <rect x="612" y="364" width="110" height="28"/>
+        </g>
+        <text x="129" y="52"  text-anchor="middle" fill="#f5e040" font-size="7.5">Ref. Author A</text>
+        <text x="233" y="40"  text-anchor="middle" fill="#888"    font-size="7.5">Ref. Author B</text>
+        <text x="771" y="52"  text-anchor="middle" fill="#f5e040" font-size="7.5">Ref. Author C</text>
+        <text x="667" y="40"  text-anchor="middle" fill="#888"    font-size="7.5">Ref. Author D</text>
+        <text x="129" y="370" text-anchor="middle" fill="#4ee394" font-size="7.5">Collaborator A</text>
+        <text x="233" y="382" text-anchor="middle" fill="#888"    font-size="7.5">Collaborator B</text>
+        <text x="771" y="370" text-anchor="middle" fill="#4ecff5" font-size="7.5">Sub-Q 3</text>
+        <text x="667" y="382" text-anchor="middle" fill="#888"    font-size="7.5">Sub-Q 4</text>
+      </svg>
+      <figcaption>fig.1 — mindmap — edit SVG text nodes or replace with &lt;img src="mindmap.png"&gt;</figcaption>
+    </figure>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════
+     §2 LITERATURE
+══════════════════════════ -->
+<div class="sh" id="literature">
+  <span class="sh-n">§02</span>
+  <h2>Literature Review</h2>
+</div>
+
+<!-- Intro + image -->
+<div class="row r-21">
+  <div class="node lilac">
+    <span class="nl">Introduction</span>
+    <p>Introduce the literature in prose. Describe the intellectual territory your sources collectively map. What conversation are these texts in with each other? Write a framing argument — not a list.</p>
+    <p>Cluster sources thematically or trace a lineage of ideas. Every reference should link outward wherever a source exists online.</p>
+  </div>
+  <div class="node bare">
+    <span class="nl">Media</span>
+    <figure class="mfig">
+      <div class="ph">[ image or diagram — replace with &lt;img src="…"&gt; ]</div>
+      <figcaption>fig.2 — [title, author, year]</figcaption>
+    </figure>
+  </div>
+</div>
+
+<!-- Annotated bibliography -->
+<div class="row r-1">
+  <div class="node yellow">
+    <span class="nl">Annotated Bibliography</span>
+    <ol class="bib" id="bibliography">
+
+      <li id="bib-1">
+        <span class="bn">01</span>
+        <div>
+          <div class="btype">Book</div>
+          <p class="bcite">Surname, First Name. <em>Title of the Work.</em> Publisher, Year. <a href="#">→</a></p>
+          <p class="bnote">Describe what this source argues and why it matters to your research. What concept, method, or claim do you actually use? Does it support or challenge your framework? 2–4 sentences.</p>
+        </div>
+      </li>
+
+      <li id="bib-2">
+        <span class="bn">02</span>
+        <div>
+          <div class="btype">Journal Article</div>
+          <p class="bcite">Author A &amp; Author B. "[Article Title]." <em>Journal Name,</em> vol. X, no. Y, Year. <a href="#">→</a></p>
+          <p class="bnote">How does this engage with your sub-questions? Does it conflict with entry 01? Name the tension — it is an asset, not a problem to smooth over.</p>
+        </div>
+      </li>
+
+      <li id="bib-3">
+        <span class="bn">03</span>
+        <div>
+          <div class="btype">Film / Exhibition</div>
+          <p class="bcite">Artist / Director. <em>Title.</em> Venue or Platform, Year. <a href="#">→</a></p>
+          <p class="bnote">How does this practical reference speak to your creative practice? What does it model, refuse, or make possible?</p>
+          <figure class="mfig">
+            <!-- <iframe width="100%" height="300" src="https://www.youtube.com/embed/VIDEO_ID" frameborder="0" allowfullscreen></iframe> -->
+            <div class="ph" style="min-height:160px;">[ video — &lt;iframe src="https://www.youtube.com/embed/VIDEO_ID" height="300"&gt;&lt;/iframe&gt; ]</div>
+            <figcaption>fig.3 — [clip title, source]</figcaption>
+          </figure>
+        </div>
+      </li>
+
+      <li id="bib-4">
+        <span class="bn">04</span>
+        <div>
+          <div class="btype">Podcast / Audio</div>
+          <p class="bcite">Host / Guest. "[Episode Title]." <em>Show Name,</em> Date. <a href="#">→</a></p>
+          <p class="bnote">What does this add that print cannot? What is the quality of hearing it rather than reading it?</p>
+          <figure class="mfig">
+            <!-- <audio controls><source src="file.mp3" type="audio/mpeg"></audio> -->
+            <div class="ph" style="min-height:52px;">[ audio — &lt;audio controls&gt;&lt;source src="file.mp3"&gt;&lt;/audio&gt; ]</div>
+            <figcaption>fig.4 — [episode title]</figcaption>
+          </figure>
+        </div>
+      </li>
+
+      <li id="bib-5">
+        <span class="bn">05</span>
+        <div>
+          <div class="btype">Online / Dataset</div>
+          <p class="bcite">Author / Organisation. "[Title]." <em>Platform,</em> Date accessed. <a href="#">→</a></p>
+          <p class="bnote">Why is this source credible and necessary? What does it offer that others don't?</p>
+        </div>
+      </li>
+
+      <li>
+        <span class="bn" style="opacity:.08;">+</span>
+        <div><p class="bnote" style="font-style:normal; opacity:.4;">Duplicate any &lt;li&gt; block above to add more entries.</p></div>
+      </li>
+    </ol>
+  </div>
+</div>
+
+<!-- Two media side by side -->
+<div class="row r-2">
+  <div class="node green">
+    <span class="nl">Media</span>
+    <figure class="mfig">
+      <div class="ph">[ image ]</div>
+      <figcaption>fig.5 — [caption]</figcaption>
+    </figure>
+  </div>
+  <div class="node blue">
+    <span class="nl">Media</span>
+    <figure class="mfig">
+      <div class="ph">[ diagram or image ]</div>
+      <figcaption>fig.6 — [caption]</figcaption>
+    </figure>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════
+     §3 CASE STUDY
+══════════════════════════ -->
+<div class="sh" id="casestudy">
+  <span class="sh-n">§03</span>
+  <h2>Case Study: Project Title</h2>
+</div>
+
+<div class="row r-1">
+  <div class="node bare" style="padding: 12px 36px;">
+    <span style="font-size:11px; letter-spacing:0.12em; text-transform:uppercase; opacity:.4;">Medium &nbsp;·&nbsp; Location &nbsp;·&nbsp; Date / Duration &nbsp;·&nbsp; with Collaborators</span>
+  </div>
+</div>
+
+<!-- Genesis + Description -->
+<div class="row r-2">
+  <div class="node orange">
+    <span class="nl">How the Project Emerged</span>
+    <p>Describe how this collaborative project emerged from the intersection of your research questions and those of your peers. What was the generative process? Name the questions each collaborator brought.</p>
+    <p><a href="#">[Collaborator A's research]</a> &nbsp;·&nbsp; <a href="#">[Collaborator B's research]</a></p>
+  </div>
+  <div class="node pink">
+    <span class="nl">Project Description + Your Contribution</span>
+    <p>Describe the project — format, medium, context, audience, duration. What exists as a result?</p>
+    <p><em>Your specific contribution:</em> be precise about what you designed, wrote, performed, built, or decided.</p>
+  </div>
+</div>
+
+<!-- Main documentation image -->
+<div class="row r-1">
+  <div class="node bare">
+    <figure class="mfig" style="margin:0; border:none; border-top: none;">
+      <div class="ph" style="min-height:360px;">[ main documentation — &lt;img src="doc.jpg" alt="…"&gt; ]</div>
+      <figcaption>fig.7 — [description, location, date]</figcaption>
+    </figure>
+  </div>
+</div>
+
+<!-- Detail pair -->
+<div class="row r-2">
+  <div class="node bare" style="padding:0;">
+    <figure class="mfig" style="margin:0; border:none;">
+      <div class="ph" style="min-height:260px;">[ detail ]</div>
+      <figcaption>fig.8 — [caption]</figcaption>
+    </figure>
+  </div>
+  <div class="node bare" style="padding:0;">
+    <figure class="mfig" style="margin:0; border:none;">
+      <div class="ph" style="min-height:260px;">[ detail ]</div>
+      <figcaption>fig.9 — [caption]</figcaption>
+    </figure>
+  </div>
+</div>
+
+<!-- Process -->
+<div class="row r-1">
+  <div class="node green">
+    <span class="nl">Process</span>
+    <ul class="process">
+      <li><span class="phl">Phase 1</span><span>[Initial dialogue — conversations, research-sharing, early proposals]</span></li>
+      <li><span class="phl">Phase 2</span><span>[Development — what was made, how, by whom; your contribution]</span></li>
+      <li><span class="phl">Phase 3</span><span>[Presentation — context, audience, reception, what surprised you]</span></li>
+      <li><span class="phl">Reflection</span><span>[Analysis — what the project revealed; what it left unresolved]</span></li>
+    </ul>
+  </div>
+</div>
+
+<!-- Literature dialogue + tension -->
+<div class="row r-12">
+  <div class="node blue">
+    <span class="nl">Literature in Dialogue</span>
+    <p>Connect your literature review to the practical work explicitly. Reference bibliography entries by number — e.g. <a href="#bib-1">[01]</a> argues X; the project confirmed / complicated / contradicted this because…</p>
+    <p>Which sub-questions were fully explored? Which remain open?</p>
+  </div>
+  <div class="node lilac">
+    <span class="nl">Key Quotation + Tension</span>
+    <blockquote>
+      <p>[A quotation from your literature that the project illuminates or complicates.]</p>
+      <cite>— Author, <em>Title</em>, Year.</cite>
+    </blockquote>
+    <div class="tension">
+      <span class="tl">Theory ↔ Practice</span>
+      <p>[Name the central tension the case study exposed. Be precise. This is the most generative passage of your research.]</p>
+    </div>
+  </div>
+</div>
+
+<!-- New questions -->
+<div class="row r-1">
+  <div class="node yellow">
+    <span class="nl">New Questions + Methods</span>
+    <p>What do you now want to investigate that you could not have anticipated beforehand? What did the collaboration open — new disciplines, formats, collaborators, institutions?</p>
+    <p>State the most urgent question your second year will need to address.</p>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════
+     §4 PAPER
+══════════════════════════ -->
+<div class="sh" id="attachment">
+  <span class="sh-n">§04</span>
+  <h2>Paper + Downloads</h2>
+</div>
+
+<div class="row r-1">
+  <div class="node bare">
+    <a class="attach" href="your-paper.pdf" target="_blank">
+      <span class="aext">PDF</span>
+      <div>
+        <div class="at">Research Paper — Your Name, Year</div>
+        <div class="ad">Written narrative outline of the research for year two. Replace href with your file path.</div>
+      </div>
+    </a>
+    <a class="attach" href="annotated-bibliography.pdf" target="_blank">
+      <span class="aext">BIB</span>
+      <div>
+        <div class="at">Annotated Bibliography — Your Name, Year</div>
+        <div class="ad">Full bibliography with annotations per entry. Replace href with your file path.</div>
+      </div>
+    </a>
+    <div class="attach" style="opacity:.25; cursor:default;">
+      <span class="aext">+</span>
+      <div>
+        <div class="at">Add attachment</div>
+        <div class="ad">Copy an &lt;a class="attach"&gt; block above.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ FOOTER ══ -->
+<div class="footer-block">
+  <div class="footer-name">Your<br>Name</div>
+  <div class="footer-meta">
+    Programme · Institution · Year<br>
+    Supervisor: Name<br>
+    <a href="mailto:you@example.com">you@example.com</a><br><br>
+    Font: <a href="https://velvetyne.fr/fonts/karrik/" target="_blank">Karrik</a> by J-B Morizot &amp; L. Le Bihan / Velvetyne — SIL OFL<br>
+    Host free: <a href="https://pages.github.com" target="_blank">GitHub Pages</a> · <a href="https://app.netlify.com/drop" target="_blank">Netlify</a> · <a href="https://tiiny.host" target="_blank">Tiiny.host</a>
+  </div>
+</div>
+
+</div><!-- .board -->
+</body>
+</html>
